@@ -2,7 +2,6 @@ const express = require('express');
 const postRoutes = require('./routes/postRoutes');
 const { resetData } = require('./data/postStore');
 const controller = require('./controllers/postController');
-const http = require('./utils/http');
 
 function createApp() {
   const app = express();
@@ -11,15 +10,14 @@ function createApp() {
   app.use('/', postRoutes);
   app.get('/explode', controller.explode);
 
-  app.use((req, res) => {
-    return http.sendError(res, 404, 'NOT_FOUND', 'Route not found');
-  });
-
-  app.use((err, req, res, next) => {
-    console.error(err);
-    if (res.headersSent) return next(err);
-    return http.sendError(res, 500, 'INTERNAL_ERROR', 'Something went wrong');
-  });
+  // TODO:
+  // - make public contract resource-oriented
+  // - standardise success envelope
+  // - standardise error envelope
+  // - add pagination metadata on list route
+  // - cap limit server-side (default limit = 2 for exercise)
+  // - stop exposing old verb routes as public contract
+  // - expose safe internal failure route for testing/demo
 
   return app;
 }
