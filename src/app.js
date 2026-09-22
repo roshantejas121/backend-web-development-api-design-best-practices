@@ -15,20 +15,14 @@ function createApp() {
     return http.sendError(res, 404, 'NOT_FOUND', 'Route not found');
   });
 
-  app.use((err, req, res, next) => {
-    console.error(err);
-    if (res.headersSent) return next(err);
-    return http.sendError(res, 500, 'INTERNAL_ERROR', 'Something went wrong');
-  });
-
   return app;
 }
 
 if (require.main === module) {
   const app = createApp();
-  const port = 3000;
+  const port = process.env.PORT || 3000;
   app.listen(port, () => {
-    console.log(`Starter API listening on port ${port}`);
+    console.log(`API listening on port ${port}`);
   });
 }
 

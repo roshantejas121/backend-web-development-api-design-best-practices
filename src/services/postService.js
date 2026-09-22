@@ -4,21 +4,30 @@ const DEFAULT_LIMIT = 2;
 const MAX_LIMIT = 100;
 
 function parsePositiveInteger(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function listPosts(query = {}) {
   const page = parsePositiveInteger(query.page, 1);
   const requestedLimit = parsePositiveInteger(query.limit, DEFAULT_LIMIT);
+
+  if (page === null || requestedLimit === null) {
+    const error = new Error('page and limit must be positive integers');
+    error.code = 'VALIDATION_ERROR';
+    error.details = ['page and limit must be positive integers'];
+    throw error;
+  }
+
   const limit = Math.min(requestedLimit, MAX_LIMIT);
-  const allPosts = store.getAllPosts();
-  const total = allPosts.length;
+  const posts = store.getAllPosts();
+  const total = posts.length;
   const pages = total === 0 ? 0 : Math.ceil(total / limit);
   const offset = (page - 1) * limit;
 
   return {
-    data: allPosts.slice(offset, offset + limit),
+    data: posts.slice(offset, offset + limit),
     meta: { page, limit, total, pages }
   };
 }
@@ -28,10 +37,17 @@ function getPost(id) {
 }
 
 function createPost(body = {}) {
-  return store.createPost({
-    title: body.title,
-    author: body.author
-  });
+  const title = typeof body.title === 'string' ? body.title.trim() : '';
+  const author = typeof body.author === 'string' ? body.author.trim() : '';
+
+  if (!title || !author) {
+    const error = new Error('title and author are required');
+    error.code = 'VALIDATION_ERROR';
+    error.details = ['title', 'author'];
+    throw error;
+  }
+
+  return store.createPost({ title, author });
 }
 
 function likePost(id) {
@@ -40,7 +56,7 @@ function likePost(id) {
 
 function explode() {
   const err = new Error('simulated internal failure');
-  err.statusCode = 500;
+  err.code = 'INTERNAL_ERROR';
   throw err;
 }
 
@@ -49,7 +65,5 @@ module.exports = {
   getPost,
   createPost,
   likePost,
-  explode,
-  DEFAULT_LIMIT,
-  MAX_LIMIT
+  explode
 };

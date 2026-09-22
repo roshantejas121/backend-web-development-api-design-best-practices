@@ -1,13 +1,7 @@
-function sendList(res, rows, meta) {
-  return res.status(200).json({ data: rows, meta });
-}
-
-function sendCreated(res, resource) {
-  return res.status(201).json({ data: resource });
-}
-
-function sendOk(res, resource) {
-  return res.status(200).json({ data: resource });
+function sendData(res, data, status = 200, meta) {
+  const body = { data };
+  if (meta !== undefined) body.meta = meta;
+  return res.status(status).json(body);
 }
 
 function sendError(res, status, code, message, details) {
@@ -17,8 +11,6 @@ function sendError(res, status, code, message, details) {
 }
 
 module.exports = {
-  sendList,
-  sendCreated,
-  sendOk,
+  sendData,
   sendError
 };

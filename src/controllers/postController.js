@@ -2,8 +2,12 @@ const service = require('../services/postService');
 const http = require('../utils/http');
 
 function listPosts(req, res) {
-  const result = service.listPosts(req.query);
-  return http.sendList(res, result.data, result.meta);
+  try {
+    const result = service.listPosts(req.query);
+    return http.sendData(res, result.data, 200, result.meta);
+  } catch (err) {
+    return handleError(res, err);
+  }
 }
 
 function getPost(req, res) {
@@ -11,24 +15,16 @@ function getPost(req, res) {
   if (!post) {
     return http.sendError(res, 404, 'NOT_FOUND', 'Post not found');
   }
-  return http.sendOk(res, post);
+  return http.sendData(res, post);
 }
 
 function createPost(req, res) {
-  const { title, author } = req.body || {};
-  const details = [];
-  if (typeof title !== 'string' || title.trim() === '') {
-    details.push({ field: 'title', message: 'Title is required' });
+  try {
+    const post = service.createPost(req.body);
+    return http.sendData(res, post, 201);
+  } catch (err) {
+    return handleError(res, err);
   }
-  if (typeof author !== 'string' || author.trim() === '') {
-    details.push({ field: 'author', message: 'Author is required' });
-  }
-  if (details.length > 0) {
-    return http.sendError(res, 400, 'VALIDATION_ERROR', 'Invalid input', details);
-  }
-
-  const post = service.createPost({ title: title.trim(), author: author.trim() });
-  return http.sendCreated(res, post);
 }
 
 function likePost(req, res) {
@@ -36,16 +32,25 @@ function likePost(req, res) {
   if (!post) {
     return http.sendError(res, 404, 'NOT_FOUND', 'Post not found');
   }
-  return http.sendCreated(res, { postId: post.id, likes: post.likes });
+  return http.sendData(res, post, 201);
 }
 
 function explode(req, res) {
   try {
     service.explode();
+    return http.sendData(res, null);
   } catch (err) {
     console.error(err);
     return http.sendError(res, 500, 'INTERNAL_ERROR', 'Something went wrong');
   }
+}
+
+function handleError(res, err) {
+  if (err.code === 'VALIDATION_ERROR') {
+    return http.sendError(res, 400, err.code, err.message, err.details);
+  }
+  console.error(err);
+  return http.sendError(res, 500, 'INTERNAL_ERROR', 'Something went wrong');
 }
 
 module.exports = {
